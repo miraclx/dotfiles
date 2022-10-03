@@ -1,0 +1,35 @@
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.dotfiles/zsh/oh-my-zsh"
+
+export ZSH_CUSTOM="$HOME/.dotfiles/zsh"
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+plugins=(
+  git
+  alias-tips
+  zsh-autopair
+  zsh-interactive-cd
+  zsh-autosuggestions
+  fast-syntax-highlighting
+)
+
+# --- mutex ---
+# source "$HOME/.dotfiles/zsh/p10k.theme"
+  source "$HOME/.dotfiles/zsh/starship.theme"
+# --- mutex ---
+
+# I'd use pathadd here, but the plugins don't behave well with $FPATH
+export FPATH="$HOME/.dotfiles/zsh/completions:$FPATH"
+
+source "$HOME/.dotfiles/functions"
+source "$HOME/.dotfiles/aliases"
+source "$HOME/.dotfiles/profile"
+source "$HOME/.dotfiles/zsh/profile"
+
+source "$HOME/.dotfiles/zsh/oh-my-zsh.theme"
+
+# --- end --- #

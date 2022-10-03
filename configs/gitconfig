@@ -1,0 +1,33 @@
+[user]
+        email = omiraculous@gmail.com
+        name = Miraculous Owonubi
+        signingKey = A9BC9FCFBEF15C92
+[commit]
+	gpgsign = true
+[core]
+        eol = lf
+        autocrlf = false
+[tag]
+        forceSignAnnotated = true
+[alias]
+        undo = reset HEAD
+[pull]
+	ff = only
+[push]
+	followTags = true
+	default = current
+[pager]
+    diff = delta
+    log = delta
+    reflog = delta
+    show = delta
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    syntax-theme = Monokai Extended # Sublime Snazzy
+    features = color-only line-numbers decorations
+    whitespace-error-style = 22 reverse
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = none

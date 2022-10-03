@@ -1,0 +1,120 @@
+function work() {
+  z "$W0RK_D1R3CT0RY/$1" && \
+  figlet -fslant "Let's code </>" && \
+  echo "Directory: $(pwd)"
+}
+
+function tsh() {
+  ssh $@ -t tmux -u new -As d3v
+}
+
+function ipinfo() {
+  curl -s "https://api.ipgeolocation.io/ipgeo?$([[ -v 1 ]]&&echo "ip=$1&")include=hostname" \
+    -H 'referer: https://ipgeolocation.io/' \
+  | jq
+}
+
+function ipinfo_min() {
+  ipinfo $1 | jq '{ip,city,country_name,state_prov,loc:(.longitude+", "+.latitude),org:(.asn+" "+.organization),time:.time_zone.current_time,timezone:.time_zone.name}'
+}
+
+function ghc() {
+  local _path=$(python3 -c "from urllib.parse import urlparse;path=urlparse('$1').path;print(path if '/' in path else '')")
+  [[ -n "$_path" ]] && {
+    printf "\x1b[33m[i]\x1b[0m ghc [$_path]..."
+    local clone_path="$W0RK_D1R3CT0RY/$_path"
+    [[ -d $clone_path ]] && echo "\x1b[32m[exists]\x1b[0m" || {
+      echo "\x1b[36m[cloning]\x1b[0m"
+      git clone -o upstream "git@github.com:$_path.git" "$clone_path" ${@:2}
+    } && work "$_path"
+  } || { echo '\x1b[31m[!]\x1b[0m invalid repo dir'; return 1 }
+}
+
+function pw() {
+  tr -dc 'A-Za-z0-9!@#$%^&*' </dev/urandom | head -c ${1:-18}
+}
+
+# yoctoⓃ to Ⓝ
+# y2n 694370026221312834841707777        -> 694.370026 Ⓝ
+# echo 694370026221312834841707777 | y2n -> 694.370026 Ⓝ
+function y2n() {
+  if [ "$#" -gt 0 ]; then val=$1; else val=$(< /dev/stdin); fi
+  echo "$val" | tr -d '\n' | awk '{print "scale=6;"$1"/10^24"}' | bc | xargs -n1 printf "%'f" | sed -e 's/0*$//' -e 's/\.$//' | awk '{print $1" Ⓝ"}'
+}
+
+# unicode to character
+# echo 65 | u2c -> A
+# u2c 123 125   -> {}
+function u2c() {
+  if [ "$#" -gt 0 ]; then val=($@); else val=($(< /dev/stdin)); fi
+  printf '%b' $(printf '\\x%x' $val)
+}
+
+function tokens() {
+  node "$W0RK_D1R3CT0RY"/miraclx/near-tokens/main.js $@
+}
+
+function tkn() {
+  tokens $@ | tee "$W0RK_D1R3CT0RY"/miraclx/near-tokens/history/"$(($(date "+%s")/3600))"
+}
+
+function prices() {
+  tokens $@ | { sleep .5; head -n 10 }
+}
+
+function slrx() {
+  alacritty --class 'sptlrx' -t "Spotify Lyrics" -e sptlrx --before "faint,italic"
+}
+
+function near_faucet() {
+  account=`openssl rand -hex 16`
+
+  xh https://helper.testnet.near.org/account \
+    newAccountId="$account" \
+    newAccountPublicKey=ed25519:Fp4FLrXufbDNDgHd8QwcWB5c5Yx3a6kQuvodxqYy3EC4
+
+  NEAR_ENV=testnet near delete "$account" $1 \
+    --seedPhrase "music pill foam among review orchard basic quit sauce calm message link"
+
+  rm -rvf "$HOME"/.near-credentials/testnet/"$account".json
+}
+
+function unescape_string() {         
+  printf '%b' "$(</dev/stdin)"
+}
+
+function pathy_has() {
+  case ":$1:" in
+    *:"$2":*) return 0;;
+    *) return 1;;
+  esac
+}
+
+function pathadd() {
+  [[ -z "$2" ]] && 2="$1" && 1=""
+
+  if pathy_has "$1" "$2"; then
+    echo "$1"
+  else
+    echo "$2${1:+:$1}"
+  fi
+}
+
+function capture_outputs() {
+  outputs="$($* 2> >(STDERR="$(cat)"; declare -p STDERR) > >(STDOUT="$(cat)"; declare -p STDOUT))"
+  echo "$outputs\n(return $?)"
+}
+
+function gh_push() {
+  if eval "$(capture_outputs gh pr view --json state -q '.state')"; then
+    if [[ "$STDOUT" == 'OPEN' ]]; then
+      git push --no-follow-tags
+      return 0
+    fi
+    echo "PR State: $STDOUT"
+  else echo "Error: $STDERR"
+  fi
+  return 1
+}
+
+# --- end --- #
