@@ -112,6 +112,11 @@ function capture_outputs() {
   echo "$outputs"$'\n'"(return $?)"
 }
 
+# Pushes to a remote branch, avoiding tags if we're on a PR
+#
+# $ gh alias set 'push' -s 'bash -c "source $HOME/.dotfiles/functions; gh_push $*"'
+#
+# $ gh push [GIT PUSH OPTIONS]
 function gh_push() {(
   set -e
   if eval "$(capture_outputs gh pr view --json state -q '.state')"; then
