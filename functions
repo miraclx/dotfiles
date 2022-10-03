@@ -109,10 +109,12 @@ function gh_push() {(
   set -e
   if eval "$(capture_outputs gh pr view --json state -q '.state')"; then
     if [[ "$STDOUT" == 'OPEN' ]]; then
+      echo "\x1b[38;5;244m$ git push --no-follow-tags $@\x1b[0m"
       git push --no-follow-tags $@
     fi
     echo "PR State: $STDOUT"
   elif [[ "$STDERR" == 'no pull requests found for branch'* ]]; then
+    echo "\x1b[38;5;244m$ git push $@\x1b[0m"
     git push $@
   else echo "Error: $STDERR"
   fi
