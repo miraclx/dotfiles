@@ -1,1 +1,7 @@
 .DS_Store
+
+zsh/oh-my-zsh/
+
+zsh/plugins/*/
+
+zsh/themes/*/
