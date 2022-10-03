@@ -18,17 +18,24 @@ function ipinfo_min() {
   ipinfo $1 | jq '{ip,city,country_name,state_prov,loc:(.longitude+", "+.latitude),org:(.asn+" "+.organization),time:.time_zone.current_time,timezone:.time_zone.name}'
 }
 
-function ghc() {
+function ghc() {(
+  set -e
   local _path=$(python3 -c "from urllib.parse import urlparse;path=urlparse('$1').path;print(path if '/' in path else '')")
-  [[ -n "$_path" ]] && {
+  if [[ -n "$_path" ]]; then
     printf "\x1b[33m[i]\x1b[0m ghc [$_path]..."
     local clone_path="$W0RK_D1R3CT0RY/$_path"
-    [[ -d $clone_path ]] && echo "\x1b[32m[exists]\x1b[0m" || {
+    if [[ -d $clone_path ]]; then
+      echo "\x1b[32m[exists]\x1b[0m"
+    else
       echo "\x1b[36m[cloning]\x1b[0m"
       git clone -o upstream "git@github.com:$_path.git" "$clone_path" ${@:2}
-    } && work "$_path"
-  } || { echo '\x1b[31m[!]\x1b[0m invalid repo dir'; return 1 }
-}
+    fi
+    work "$_path"
+  else
+    echo '\x1b[31m[!]\x1b[0m invalid repo dir'
+    return 1
+  fi
+)}
 
 function pw() {
   tr -dc 'A-Za-z0-9!@#$%^&*' </dev/urandom | head -c ${1:-18}
@@ -59,7 +66,7 @@ function tkn() {
 }
 
 function prices() {
-  tokens $@ | { sleep .5; head -n 10 }
+  tokens $@ | (sleep .5; head -n 10)
 }
 
 function slrx() {
@@ -102,19 +109,19 @@ function pathadd() {
 
 function capture_outputs() {
   outputs="$($* 2> >(STDERR="$(cat)"; declare -p STDERR) > >(STDOUT="$(cat)"; declare -p STDOUT))"
-  echo "$outputs\n(return $?)"
+  echo "$outputs"$'\n'"(return $?)"
 }
 
 function gh_push() {(
   set -e
   if eval "$(capture_outputs gh pr view --json state -q '.state')"; then
     if [[ "$STDOUT" == 'OPEN' ]]; then
-      echo "\x1b[38;5;244m$ git push --no-follow-tags $@\x1b[0m"
+      echo -e "\x1b[38;5;244m$ git push --no-follow-tags $@\x1b[0m"
       git push --no-follow-tags $@
     fi
     echo "PR State: $STDOUT"
   elif [[ "$STDERR" == 'no pull requests found for branch'* ]]; then
-    echo "\x1b[38;5;244m$ git push $@\x1b[0m"
+    echo -e "\x1b[38;5;244m$ git push $@\x1b[0m"
     git push $@
   else echo "Error: $STDERR"
   fi
