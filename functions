@@ -18,8 +18,7 @@ function ipinfo_min() {
   ipinfo $1 | jq '{ip,city,country_name,state_prov,loc:(.longitude+", "+.latitude),org:(.asn+" "+.organization),time:.time_zone.current_time,timezone:.time_zone.name}'
 }
 
-function ghc() {(
-  set -e
+function ghc() {
   local _path=$(python3 -c "from urllib.parse import urlparse;path=urlparse('$1').path;print(path if '/' in path else '')")
   if [[ -n "$_path" ]]; then
     printf "\x1b[33m[i]\x1b[0m ghc [$_path]..."
@@ -28,14 +27,14 @@ function ghc() {(
       echo "\x1b[32m[exists]\x1b[0m"
     else
       echo "\x1b[36m[cloning]\x1b[0m"
-      git clone -o upstream "git@github.com:$_path.git" "$clone_path" ${@:2}
+      git clone -o upstream "git@github.com:$_path.git" "$clone_path" ${@:2} || return 1
     fi
     work "$_path"
   else
     echo '\x1b[31m[!]\x1b[0m invalid repo dir'
     return 1
   fi
-)}
+}
 
 function pw() {
   tr -dc 'A-Za-z0-9!@#$%^&*' </dev/urandom | head -c ${1:-18}
