@@ -133,4 +133,19 @@ function gh_push() {(
   return 1
 )}
 
+function extract_handles() {
+  ggrep -ioP '@[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}' | sort -u
+}
+
+function humanify() {
+  xargs | # convert newline separated list to space separated list
+  sed 's/ /, /g' | # replace spaces with commas
+  sed 's/\(.*\), \(.*\)$/\1 and \2/' # replace last comma with 'and'
+}
+
+# Generate automated release notes for a GitHub release
+#
+# $ pbpaste | extract_handles | humanify
+# @iTranscend, @joel-u410, @joshuajbouw, @medvedNick and @miraclx
+
 # --- end --- #
