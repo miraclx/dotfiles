@@ -234,7 +234,7 @@ function near_staking_info() {
         | {
           "'"$validator"'": {
             staked: .,
-            reward: (. - '"$deposit"'),
+            reward: [. - '"$deposit"', 0] | max,
             deposit: '"$deposit"'
           }
         }'
