@@ -4,12 +4,5 @@
 			"path": "."
 		}
 	],
-	"settings": {
-		"files.associations": {
-			"profile": "shellscript",
-			"aliases": "shellscript",
-			"functions": "shellscript",
-			"*.theme": "shellscript",
-		}
-	}
+	"settings": {}
 }

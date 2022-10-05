@@ -18,18 +18,18 @@ plugins=(
 )
 
 # --- mutex ---
-# source "$HOME/.dotfiles/zsh/p10k.theme"
-  source "$HOME/.dotfiles/zsh/starship.theme"
+# source "$HOME/.dotfiles/zsh/p10k.theme.sh"
+  source "$HOME/.dotfiles/zsh/starship.theme.sh"
 # --- mutex ---
 
 # I'd use pathadd here, but the plugins don't behave well with $FPATH
 export FPATH="$HOME/.dotfiles/zsh/completions:$FPATH"
 
-source "$HOME/.dotfiles/functions"
-source "$HOME/.dotfiles/aliases"
-source "$HOME/.dotfiles/profile"
-source "$HOME/.dotfiles/zsh/profile"
+source "$HOME/.dotfiles/functions.sh"
+source "$HOME/.dotfiles/aliases.sh"
+source "$HOME/.dotfiles/profile.sh"
+source "$HOME/.dotfiles/zsh/profile.sh"
 
-source "$HOME/.dotfiles/zsh/oh-my-zsh.theme"
+source "$HOME/.dotfiles/zsh/oh-my-zsh.theme.sh"
 
 # --- end --- #
