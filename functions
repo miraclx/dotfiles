@@ -142,6 +142,22 @@ function humanify() {
   sed 's/\(.*\), \(.*\)$/\1 and \2/' # replace last comma with 'and'
 }
 
+# near_deposits [ACCOUNT..]
+function near_deposits() {
+  for account in $@; do
+    xh "https://api.kitwallet.app/staking-deposits/$account" \
+    | jq '
+      [
+        .[]
+        | .deposit |= tonumber
+        | select(.deposit > 0)
+        | (.deposit /= pow(10; 24))
+        | {(.validator_id): (.deposit)}
+      ] | add as $validators
+      | { "'"$account"'": { total: $validators|values|add, $validators } }'
+  done | jq -s add
+}
+
 # Generate automated release notes for a GitHub release
 #
 # $ pbpaste | extract_handles | humanify
