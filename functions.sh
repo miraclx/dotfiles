@@ -251,6 +251,10 @@ function near_staking_info() {
     (
       (
         local deposits="$(near_staking_deposits "$account" | jq -r '.["'"$account"'"]')"
+        if [[ "$deposits" == 'null' ]]; then
+          echo '{"'"$account"'": null}' > "$file"
+          return
+        fi
         local validators="$(jq -r .validators <<< "$deposits")"
         for validator in $(jq -r 'keys[]' <<< "$validators"); do
           local deposit="$(jq -r '.["'"$validator"'"]' <<< "$validators")"
@@ -301,7 +305,7 @@ function near_staking_info() {
     add
     | {
       accounts: .,
-      total: map(.total | to_entries)
+      total: map(.total | select(. != null) | to_entries)
         | add
         | group_by(.key)
         | map({
