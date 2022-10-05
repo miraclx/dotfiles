@@ -301,7 +301,7 @@ function near_staking_info() {
     cat "$file"
     rm "$file"
   done \
-  | jq -s '
+  | jq -s --indent 4 '
     add
     | {
       accounts: .,
