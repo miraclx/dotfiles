@@ -158,9 +158,8 @@ function humanify() {
 #  }
 # }
 function near_staking_deposits() {
-  local account=''
   for account in $@; do
-    xh "https://api.kitwallet.app/staking-deposits/$account" \
+    xh -I "https://api.kitwallet.app/staking-deposits/$account" \
     | jq '
       [
         .[]
@@ -179,9 +178,8 @@ function near_staking_deposits() {
 #   "b.near": 371.3468091092036
 # }
 function near_staking_balance() {
-  local account=''
   for account in ${@:2}; do
-    xh https://rpc.mainnet.near.org \
+    xh -I https://rpc.mainnet.near.org \
       jsonrpc=2.0 id=dontcare method=query \
       params:='{
         "request_type": "call_function",
@@ -199,13 +197,13 @@ function near_staking_balance() {
 # initialize a semaphore with a given number of tokens
 # https://unix.stackexchange.com/a/216475/514123
 __open_sem(){
-    mkfifo pipe-$$
-    exec 3<>pipe-$$
-    rm pipe-$$
-    local i=$1
-    for _ in {1..$i}; do
-        printf 000 >&3
-    done
+  mkfifo pipe-$$
+  exec 3<>pipe-$$
+  rm pipe-$$
+  local i=$1
+  for _ in {1..$i}; do
+    printf 000 >&3
+  done
 }
 
 # $ near_staking_info a.near
@@ -231,59 +229,69 @@ __open_sem(){
 #   }
 # }
 function near_staking_info() {
-  local pids=()
   local files=()
 
   local N=5
   __open_sem $N
 
-  local account=''
+  local pidfile="$(mktemp)"
+
   for account in $@; do
     # acquire the semaphore
-    read -u 3 -k 3 x && ((0==x)) || return $x
+    read -u 3 -k 3 x && ((0==x)) || {
+      for pid in "${pids[@]}"; do
+        kill "$pid"
+        lsof -p "$pid" +r 1 &>/dev/null
+      done
+      return $x
+    }
 
     local file="$(mktemp)"
     files+=("$file")
     (
-      local deposits="$(near_staking_deposits "$account" | jq -r '.["'"$account"'"]')"
-      local validators="$(jq -r .validators <<< "$deposits")"
-      for validator in $(jq -r 'keys[]' <<< "$validators"); do
-        local deposit="$(jq -r '.["'"$validator"'"]' <<< "$validators")"
-        near_staking_balance "$validator" "$account" \
-        | jq -r '
-          .["'"$account"'"]
+      (
+        local deposits="$(near_staking_deposits "$account" | jq -r '.["'"$account"'"]')"
+        local validators="$(jq -r .validators <<< "$deposits")"
+        for validator in $(jq -r 'keys[]' <<< "$validators"); do
+          local deposit="$(jq -r '.["'"$validator"'"]' <<< "$validators")"
+          near_staking_balance "$validator" "$account" \
+          | jq -r '
+            .["'"$account"'"]
+            | {
+              "'"$validator"'": {
+                deposit: '"$deposit"',
+                reward: [. - '"$deposit"', 0] | max,
+                staked: .
+              }
+            }'
+        done \
+        | jq -s '
+          add
           | {
-            "'"$validator"'": {
-              deposit: '"$deposit"',
-              reward: [. - '"$deposit"', 0] | max,
-              staked: .
+            "'"$account"'": {
+              validators: .,
+              total: map(to_entries)
+                | add
+                | group_by(.key)
+                | map({
+                  key: .[0].key,
+                  value: map(.value) | add
+                })
+                | from_entries
             }
-          }'
-      done \
-      | jq -s '
-        add
-        | {
-          "'"$account"'": {
-            validators: .,
-            total: map(to_entries)
-              | add
-              | group_by(.key)
-              | map({
-                key: .[0].key,
-                value: map(.value) | add
-              })
-              | from_entries
-          }
-        }' > "$file"
+          }' > "$file"
         # release the semaphore
         printf '%.3d' $? >&3
       ) &
-    pids+=($!)
+      echo $! >> "$pidfile"
+    )
   done
 
-  for pid in ${pids[@]}; do
-    wait $pid
-  done
+  while read -r pid; do
+    lsof -p "$pid" +r 1 &>/dev/null
+  done < "$pidfile"
+
+  rm "$pidfile"
 
   for file in ${files[@]}; do
     cat "$file"
