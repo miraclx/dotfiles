@@ -253,37 +253,37 @@ function near_staking_info() {
         local deposits="$(near_staking_deposits "$account" | jq -r '.["'"$account"'"]')"
         if [[ "$deposits" == 'null' ]]; then
           echo '{"'"$account"'": null}' > "$file"
-          return
-        fi
-        local validators="$(jq -r .validators <<< "$deposits")"
-        for validator in $(jq -r 'keys[]' <<< "$validators"); do
-          local deposit="$(jq -r '.["'"$validator"'"]' <<< "$validators")"
-          near_staking_balance "$validator" "$account" \
-          | jq -r '
-            .["'"$account"'"]
+        else
+          local validators="$(jq -r .validators <<< "$deposits")"
+          for validator in $(jq -r 'keys[]' <<< "$validators"); do
+            local deposit="$(jq -r '.["'"$validator"'"]' <<< "$validators")"
+            near_staking_balance "$validator" "$account" \
+            | jq -r '
+              .["'"$account"'"]
+              | {
+                "'"$validator"'": {
+                  deposit: '"$deposit"',
+                  reward: [. - '"$deposit"', 0] | max,
+                  staked: .
+                }
+              }'
+          done \
+          | jq -s '
+            add
             | {
-              "'"$validator"'": {
-                deposit: '"$deposit"',
-                reward: [. - '"$deposit"', 0] | max,
-                staked: .
+              "'"$account"'": {
+                validators: .,
+                total: map(to_entries)
+                  | add
+                  | group_by(.key)
+                  | map({
+                    key: .[0].key,
+                    value: map(.value) | add
+                  })
+                  | from_entries
               }
-            }'
-        done \
-        | jq -s '
-          add
-          | {
-            "'"$account"'": {
-              validators: .,
-              total: map(to_entries)
-                | add
-                | group_by(.key)
-                | map({
-                  key: .[0].key,
-                  value: map(.value) | add
-                })
-                | from_entries
-            }
-          }' > "$file"
+            }' > "$file"
+        fi
         # release the semaphore
         printf '%.3d' $? >&3
       ) &
