@@ -158,6 +158,7 @@ function humanify() {
 #  }
 # }
 function near_staking_deposits() {
+  local account=''
   for account in $@; do
     xh "https://api.kitwallet.app/staking-deposits/$account" \
     | jq '
@@ -178,6 +179,7 @@ function near_staking_deposits() {
 #   "b.near": 371.3468091092036
 # }
 function near_staking_balance() {
+  local account=''
   for account in ${@:2}; do
     xh https://rpc.mainnet.near.org \
       jsonrpc=2.0 id=dontcare method=query \
@@ -217,10 +219,14 @@ function near_staking_balance() {
 #   }
 # }
 function near_staking_info() {
+  local account=''
   for account in $@; do
+    local deposits=''
     near_staking_deposits "$account" | jq -r '.["'"$account"'"]' | read -d '' deposits
+    local validators=''
     jq -r .validators <<< "$deposits" | read -d '' validators
     for validator in $(jq -r 'keys[]' <<< "$validators"); do
+      local deposit=''
       jq -r '.["'"$validator"'"]' <<< "$validators" | read -d '' deposit
       near_staking_balance "$validator" "$account" \
       | jq -r '
