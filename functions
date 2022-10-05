@@ -218,14 +218,14 @@ __open_sem(){
 #     },
 #     "validators": {
 #       "astro-stakers.poolv1.near": {
-#         "staked": 3084.515746967981,
+#         "deposit": 2977.1029163720427,
 #         "reward": 107.41283059593843,
-#         "deposit": 2977.1029163720427
+#         "staked": 3084.515746967981
 #       },
 #       "zavodil.poolv1.near": {
-#         "staked": 2739.359779726929,
+#         "deposit": 2626.058084426484,
 #         "reward": 113.30169530044486,
-#         "deposit": 2626.058084426484
+#         "staked": 2739.359779726929
 #       }
 #     }
 #   }
@@ -254,9 +254,9 @@ function near_staking_info() {
           .["'"$account"'"]
           | {
             "'"$validator"'": {
-              staked: .,
+              deposit: '"$deposit"',
               reward: [. - '"$deposit"', 0] | max,
-              deposit: '"$deposit"'
+              staked: .
             }
           }'
       done \
