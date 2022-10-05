@@ -30,6 +30,8 @@ source "$HOME/.dotfiles/aliases.sh"
 source "$HOME/.dotfiles/profile.sh"
 source "$HOME/.dotfiles/zsh/profile.sh"
 
+source "$HOME/.dotfiles/private.profile.sh"
+
 source "$HOME/.dotfiles/zsh/oh-my-zsh.theme.sh"
 
 # --- end --- #

@@ -316,4 +316,27 @@ function near_staking_info() {
     }'
 }
 
+export PORTFOLIO_HISTORY="$HOME/.near/stake-history"
+
+# save the portfolio state at the current time and
+# show a side-by-side diff with the last most recent state
+function near_portfolio() {
+  if [ -z ${NEAR_PORTFOLIO_ACCOUNTS+x} ]; then
+    echo "NEAR_PORTFOLIO_ACCOUNTS is not set"
+    return 1
+  fi
+  local most_recent="$(ls -1 "$PORTFOLIO_HISTORY" | sort -n | grep -o '^[0-9]*.json$' | tail -n 1)"
+  local new_file="$PORTFOLIO_HISTORY/$(date +%s).json"
+  local portfolio="$(near_staking_info $NEAR_PORTFOLIO_ACCOUNTS[@])"
+  <<< "$portfolio" > "$new_file"
+  if [[ -n "$most_recent" ]]; then
+    local cmd="delta -s $PORTFOLIO_HISTORY/$most_recent $new_file"
+    echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
+    eval "$cmd" || return $?
+  fi
+  local cmd="cat $new_file"
+  echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
+  eval "$cmd" | jq . --indent 4
+}
+
 # --- end --- #

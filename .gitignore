@@ -1,5 +1,7 @@
 .DS_Store
 
+private.profile.sh
+
 zsh/oh-my-zsh/
 
 zsh/plugins/*/
