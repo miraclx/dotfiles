@@ -169,7 +169,7 @@ function near_staking_deposits() {
         | (.deposit /= pow(10; 24))
         | {(.validator_id): (.deposit)}
       ] | add
-      | { "'"$account"'": { total: values|add, validators:. } }'
+      | { "'"$account"'": { validators: ., total: values | add } }'
   done | jq -s add
 }
 
@@ -243,6 +243,7 @@ function near_staking_info() {
       add
       | {
         "'"$account"'": {
+          validators: .,
           total: map(to_entries)
             | add
             | group_by(.key)
@@ -250,8 +251,7 @@ function near_staking_info() {
               key: .[0].key,
               value: map(.value) | add
             })
-            | from_entries,
-          validators: .
+            | from_entries
         }
       }'
   done
