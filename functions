@@ -240,7 +240,7 @@ function near_staking_info() {
   local account=''
   for account in $@; do
     # acquire the semaphore
-    read -u 3 -k 3 x && ((0==x)) || exit $x
+    read -u 3 -k 3 x && ((0==x)) || return $x
 
     local file="$(mktemp)"
     files+=("$file")
