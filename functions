@@ -142,8 +142,22 @@ function humanify() {
   sed 's/\(.*\), \(.*\)$/\1 and \2/' # replace last comma with 'and'
 }
 
-# near_deposits [ACCOUNT..]
-function near_deposits() {
+# To generate automated release notes for a GitHub release
+#
+# $ pbpaste | extract_handles | humanify
+# @iTranscend, @joel-u410, @joshuajbouw, @medvedNick and @miraclx
+
+# near_staking_deposits a.near
+# {
+#  "a.near": {
+#    "total": 5603.161000798527,
+#    "validators": {
+#      "zavodil.poolv1.near": 2626.058084426484,
+#      "astro-stakers.poolv1.near": 2977.1029163720427
+#    }
+#  }
+# }
+function near_staking_deposits() {
   for account in $@; do
     xh "https://api.kitwallet.app/staking-deposits/$account" \
     | jq '
@@ -153,14 +167,88 @@ function near_deposits() {
         | select(.deposit > 0)
         | (.deposit /= pow(10; 24))
         | {(.validator_id): (.deposit)}
-      ] | add as $validators
-      | { "'"$account"'": { total: $validators|values|add, $validators } }'
+      ] | add
+      | { "'"$account"'": { total: values|add, validators:. } }'
   done | jq -s add
 }
 
-# Generate automated release notes for a GitHub release
-#
-# $ pbpaste | extract_handles | humanify
-# @iTranscend, @joel-u410, @joshuajbouw, @medvedNick and @miraclx
+# near_staking_balance zavodil.poolv1.near a.near b.near
+# {
+#   "a.near": 2739.359779726929,
+#   "b.near": 371.3468091092036
+# }
+function near_staking_balance() {
+  for account in ${@:2}; do
+    xh https://rpc.mainnet.near.org \
+      jsonrpc=2.0 id=dontcare method=query \
+      params:='{
+        "request_type": "call_function",
+        "finality": "optimistic",
+        "account_id": "'"$1"'",
+        "method_name": "get_account_staked_balance",
+        "args_base64": "'$(echo -n '{"account_id":"'"$account"'"}' | base64)'"
+      }' \
+      | jq -r '.result.result[]' \
+      | u2c \
+      | jq '{ "'"$account"'": (tonumber / pow(10; 24)) }'
+  done | jq -s add
+}
+
+# $ near_staking_info a.near
+# {
+#   "a.near": {
+#     "total": {
+#       "deposit": 5603.161000798527,
+#       "reward": 220.7145258963833,
+#       "staked": 5823.87552669491
+#     },
+#     "validators": {
+#       "astro-stakers.poolv1.near": {
+#         "staked": 3084.515746967981,
+#         "reward": 107.41283059593843,
+#         "deposit": 2977.1029163720427
+#       },
+#       "zavodil.poolv1.near": {
+#         "staked": 2739.359779726929,
+#         "reward": 113.30169530044486,
+#         "deposit": 2626.058084426484
+#       }
+#     }
+#   }
+# }
+function near_staking_info() {
+  for account in $@; do
+    near_staking_deposits "$account" | jq -r '.["'"$account"'"]' | read -d '' deposits
+    jq -r .validators <<< "$deposits" | read -d '' validators
+    for validator in $(jq -r 'keys[]' <<< "$validators"); do
+      jq -r '.["'"$validator"'"]' <<< "$validators" | read -d '' deposit
+      near_staking_balance "$validator" "$account" \
+      | jq -r '
+        .["'"$account"'"]
+        | {
+          "'"$validator"'": {
+            staked: .,
+            reward: (. - '"$deposit"'),
+            deposit: '"$deposit"'
+          }
+        }'
+    done \
+    | jq -s '
+      add
+      | {
+        "'"$account"'": {
+          total: map(to_entries)
+            | add
+            | group_by(.key)
+            | map({
+              key: .[0].key,
+              value: map(.value) | add
+            })
+            | from_entries,
+          validators: .
+        }
+      }'
+  done
+}
 
 # --- end --- #
