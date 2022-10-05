@@ -196,6 +196,18 @@ function near_staking_balance() {
   done | jq -s add
 }
 
+# initialize a semaphore with a given number of tokens
+# https://unix.stackexchange.com/a/216475/514123
+__open_sem(){
+    mkfifo pipe-$$
+    exec 3<>pipe-$$
+    rm pipe-$$
+    local i=$1
+    for _ in {1..$i}; do
+        printf 000 >&3
+    done
+}
+
 # $ near_staking_info a.near
 # {
 #   "a.near": {
@@ -219,41 +231,63 @@ function near_staking_balance() {
 #   }
 # }
 function near_staking_info() {
+  local pids=()
+  local files=()
+
+  local N=5
+  __open_sem $N
+
   local account=''
   for account in $@; do
-    local deposits=''
-    near_staking_deposits "$account" | jq -r '.["'"$account"'"]' | read -d '' deposits
-    local validators=''
-    jq -r .validators <<< "$deposits" | read -d '' validators
-    for validator in $(jq -r 'keys[]' <<< "$validators"); do
-      local deposit=''
-      jq -r '.["'"$validator"'"]' <<< "$validators" | read -d '' deposit
-      near_staking_balance "$validator" "$account" \
-      | jq -r '
-        .["'"$account"'"]
+    # acquire the semaphore
+    read -u 3 -k 3 x && ((0==x)) || exit $x
+
+    local file="$(mktemp)"
+    files+=("$file")
+    (
+      local deposits="$(near_staking_deposits "$account" | jq -r '.["'"$account"'"]')"
+      local validators="$(jq -r .validators <<< "$deposits")"
+      for validator in $(jq -r 'keys[]' <<< "$validators"); do
+        local deposit="$(jq -r '.["'"$validator"'"]' <<< "$validators")"
+        near_staking_balance "$validator" "$account" \
+        | jq -r '
+          .["'"$account"'"]
+          | {
+            "'"$validator"'": {
+              staked: .,
+              reward: [. - '"$deposit"', 0] | max,
+              deposit: '"$deposit"'
+            }
+          }'
+      done \
+      | jq -s '
+        add
         | {
-          "'"$validator"'": {
-            staked: .,
-            reward: [. - '"$deposit"', 0] | max,
-            deposit: '"$deposit"'
+          "'"$account"'": {
+            validators: .,
+            total: map(to_entries)
+              | add
+              | group_by(.key)
+              | map({
+                key: .[0].key,
+                value: map(.value) | add
+              })
+              | from_entries
           }
-        }'
-    done \
-    | jq -s '
-      add
-      | {
-        "'"$account"'": {
-          validators: .,
-          total: map(to_entries)
-            | add
-            | group_by(.key)
-            | map({
-              key: .[0].key,
-              value: map(.value) | add
-            })
-            | from_entries
-        }
-      }'
+        }' > "$file"
+        # release the semaphore
+        printf '%.3d' $? >&3
+      ) &
+    pids+=($!)
+  done
+
+  for pid in ${pids[@]}; do
+    wait $pid
+  done
+
+  for file in ${files[@]}; do
+    cat "$file"
+    rm "$file"
   done \
   | jq -s '
     add
