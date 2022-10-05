@@ -254,7 +254,20 @@ function near_staking_info() {
             | from_entries
         }
       }'
-  done
+  done \
+  | jq -s '
+    add
+    | {
+      accounts: .,
+      total: map(.total | to_entries)
+        | add
+        | group_by(.key)
+        | map({
+          key: .[0].key,
+          value: map(.value) | add
+        })
+        | from_entries
+    }'
 }
 
 # --- end --- #
