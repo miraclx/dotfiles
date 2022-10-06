@@ -305,14 +305,17 @@ function near_staking_info() {
     add
     | {
       accounts: .,
-      total: map(.total | select(. != null) | to_entries)
+      total: [
+        map(.total | select(. != null) | to_entries)
         | add
+        | select(. != null)
         | group_by(.key)
         | map({
           key: .[0].key,
           value: map(.value) | add
         })
         | from_entries
+      ] | add
     }'
 }
 
