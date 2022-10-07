@@ -345,16 +345,11 @@ function near_portfolio() {
     echo "\x1b[31mNo portfolio history found\x1b[0m" >&2
     return 1
   elif [ ${#two_files[@]} -eq 2 ]; then
-    if [ "$new_file" != "$PORTFOLIO_HISTORY/${two_files[2]}" ]; then
-      echo "\x1b[31mUnexpected State: $new_file != $PORTFOLIO_HISTORY/${two_files[2]}\x1b[0m"
-      return 1
-    fi
-
     local cmd="delta -s $PORTFOLIO_HISTORY/${two_files[1]} $PORTFOLIO_HISTORY/${two_files[2]}"
     echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
     eval "$cmd" || return $?
 
-    if [ -n "$new_file" ]; then
+    if [[ "$new_file" == "$PORTFOLIO_HISTORY/${two_files[2]}" ]]; then
       echo "\x1b[33mNo portfolio state changes, not saving\x1b[0m" >&2
       local cmd="rm $new_file"
       echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
