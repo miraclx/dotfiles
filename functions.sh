@@ -323,21 +323,32 @@ export PORTFOLIO_HISTORY="$HOME/.near/stake-history"
 
 # save the portfolio state at the current time and
 # show a side-by-side diff with the last most recent state
+# near_portfolio <- get the current portfolio state and show a diff
+# near_portfolio 0 <- get a diff of the last two portfolio states
+# near_portfolio 1 <- get a diff of the two states before the last one
 function near_portfolio() {
   if [ -z ${NEAR_PORTFOLIO_ACCOUNTS+x} ]; then
     echo "NEAR_PORTFOLIO_ACCOUNTS is not set"
     return 1
   fi
-  local most_recent="$(ls -1 "$PORTFOLIO_HISTORY" | sort -n | grep -o '^[0-9]*.json$' | tail -n 1)"
-  local new_file="$PORTFOLIO_HISTORY/$(date +%s).json"
-  local portfolio="$(near_staking_info $NEAR_PORTFOLIO_ACCOUNTS[@])"
-  <<< "$portfolio" > "$new_file"
-  if [[ -n "$most_recent" ]]; then
-    local cmd="delta -s $PORTFOLIO_HISTORY/$most_recent $new_file"
+  if [ -z "$1" ]; then
+    local new_file="$PORTFOLIO_HISTORY/$(date +%s).json"
+    local portfolio="$(near_staking_info $NEAR_PORTFOLIO_ACCOUNTS[@])"
+    <<< "$portfolio" > "$new_file"
+  fi
+  local two_files=($(ls -1 "$PORTFOLIO_HISTORY" | sort -n | grep -o '^[0-9]*.json$' | tail -n $(( 2 + ${1:-0} )) | head -n 2))
+  if [ ${#two_files[@]} -eq 0 ]; then
+    echo "\x1b[31mNo portfolio history found\x1b[0m"
+    return 1
+  elif [ ${#two_files[@]} -eq 2 ]; then
+    local cmd="delta -s $PORTFOLIO_HISTORY/${two_files[1]} $PORTFOLIO_HISTORY/${two_files[2]}"
     echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
     eval "$cmd" || return $?
+    local cmd="cat $PORTFOLIO_HISTORY/${two_files[2]}"
+  else
+    local cmd="cat $PORTFOLIO_HISTORY/${two_files[1]}"
   fi
-  local cmd="cat $new_file"
+
   echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
   eval "$cmd" | jq . --indent 4
 }
