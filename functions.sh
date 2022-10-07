@@ -85,7 +85,7 @@ function near_faucet() {
   rm -rvf "$HOME"/.near-credentials/testnet/"$account".json
 }
 
-function unescape_string() {         
+function unescape_string() {
   printf '%b' "$(</dev/stdin)"
 }
 
@@ -323,32 +323,47 @@ export PORTFOLIO_HISTORY="$HOME/.near/stake-history"
 
 # save the portfolio state at the current time and
 # show a side-by-side diff with the last most recent state
-# near_portfolio <- get the current portfolio state and show a diff
-# near_portfolio 0 <- get a diff of the last two portfolio states
-# near_portfolio 1 <- get a diff of the two states before the last one
+# does not save the state if there is no change
+# $ near_portfolio <- get the current portfolio state and show a diff
+# $ near_portfolio 0 <- get a diff of the last two portfolio states
+# $ near_portfolio 1 <- get a diff of the two states before the last one
 function near_portfolio() {
   if [ -z ${NEAR_PORTFOLIO_ACCOUNTS+x} ]; then
     echo "NEAR_PORTFOLIO_ACCOUNTS is not set"
     return 1
   fi
+
   if [ -z "$1" ]; then
     local new_file="$PORTFOLIO_HISTORY/$(date +%s).json"
     local portfolio="$(near_staking_info $NEAR_PORTFOLIO_ACCOUNTS[@])"
     <<< "$portfolio" > "$new_file"
   fi
+
   local two_files=($(ls -1 "$PORTFOLIO_HISTORY" | sort -n | grep -o '^[0-9]*.json$' | tail -n $(( 2 + ${1:-0} )) | head -n 2))
+
   if [ ${#two_files[@]} -eq 0 ]; then
-    echo "\x1b[31mNo portfolio history found\x1b[0m"
+    echo "\x1b[31mNo portfolio history found\x1b[0m" >&2
     return 1
   elif [ ${#two_files[@]} -eq 2 ]; then
+    if [ "$new_file" != "$PORTFOLIO_HISTORY/${two_files[2]}" ]; then
+      echo "\x1b[31mUnexpected State: $new_file != $PORTFOLIO_HISTORY/${two_files[2]}\x1b[0m"
+      return 1
+    fi
+
     local cmd="delta -s $PORTFOLIO_HISTORY/${two_files[1]} $PORTFOLIO_HISTORY/${two_files[2]}"
     echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
     eval "$cmd" || return $?
-    local cmd="cat $PORTFOLIO_HISTORY/${two_files[2]}"
+
+    if [ -n "$new_file" ]; then
+      echo "\x1b[33mNo portfolio state changes, not saving\x1b[0m" >&2
+      local cmd="rm $new_file"
+      echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
+      eval "$cmd" || return $?
+    fi
   else
-    local cmd="cat $PORTFOLIO_HISTORY/${two_files[1]}"
   fi
 
+  local cmd="cat $PORTFOLIO_HISTORY/${two_files[1]}"
   echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
   eval "$cmd" | jq . --indent 4
 }
