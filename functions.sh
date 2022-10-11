@@ -158,6 +158,11 @@ function humanify() {
 #  }
 # }
 function near_staking_deposits() {
+  if [ "$#" -eq 0 ]; then
+    echo "Usage: near_staking_deposits <account_id> [<account_id> ...]" >&2
+    return 1
+  fi
+
   for account in $@; do
     xh -I "https://api.kitwallet.app/staking-deposits/$account" \
     | jq '
@@ -184,6 +189,11 @@ function near_staking_deposits() {
 #   }
 # }
 function near_staking_account() {
+  if [ "$#" -lt 2 ]; then
+    echo "Usage: near_staking_account <validator_id> <account_id> [<account_id> ...]" >&2
+    return 1
+  fi
+
   for account in ${@:2}; do
     local result="$(
       xh -I https://rpc.mainnet.near.org \
@@ -258,6 +268,11 @@ __open_sem(){
 #   }
 # }
 function near_staking_info() {
+  if [ "$#" -eq 0 ]; then
+    echo "Usage: near_staking_info <account_id> [<account_id> ...]" >&2
+    return 1
+  fi
+
   local files=()
 
   local N=5
