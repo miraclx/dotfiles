@@ -172,25 +172,44 @@ function near_staking_deposits() {
   done | jq -s add
 }
 
-# near_staking_balance zavodil.poolv1.near a.near b.near
+# near_staking_account zavodil.poolv1.near a.near b.near
 # {
-#   "a.near": 2739.359779726929,
-#   "b.near": 371.3468091092036
+#   "a.near": {
+#     "staked": 0,
+#     "unstaked": 350.7035608688779
+#   },
+#   "b.near": {
+#     "staked": 371.3468091092036,
+#     "unstaked": 0
+#   }
 # }
-function near_staking_balance() {
+function near_staking_account() {
   for account in ${@:2}; do
-    xh -I https://rpc.mainnet.near.org \
-      jsonrpc=2.0 id=dontcare method=query \
-      params:='{
-        "request_type": "call_function",
-        "finality": "optimistic",
-        "account_id": "'"$1"'",
-        "method_name": "get_account_staked_balance",
-        "args_base64": "'$(echo -n '{"account_id":"'"$account"'"}' | base64)'"
-      }' \
-      | jq -r '.result.result[]' \
+    local result="$(
+      xh -I https://rpc.mainnet.near.org \
+        jsonrpc=2.0 id=dontcare method=query \
+        params:='{
+          "request_type": "call_function",
+          "finality": "optimistic",
+          "account_id": "'"$1"'",
+          "method_name": "get_account",
+          "args_base64": "'$(echo -n '{"account_id":"'"$account"'"}' | base64)'"
+        }'
+    )" || return 1
+
+    jq -r '.result.error' <<< "$result" \
+      | grep -v '^null$' >/dev/null \
+      && jq <<< "$result" \
+      && return 1
+
+    jq -r '.result.result[]' <<< "$result" \
       | u2c \
-      | jq '{ "'"$account"'": (tonumber / pow(10; 24)) }'
+      | jq '{
+          "'"$account"'": {
+            staked: (.staked_balance | tonumber / pow(10; 24)),
+            unstaked: (.unstaked_balance | tonumber / pow(10; 24))
+          }
+        }'
   done | jq -s add
 }
 
@@ -206,26 +225,36 @@ __open_sem(){
   done
 }
 
-# $ near_staking_info a.near
 # {
-#   "a.near": {
-#     "total": {
-#       "deposit": 5603.161000798527,
-#       "reward": 220.7145258963833,
-#       "staked": 5823.87552669491
-#     },
-#     "validators": {
-#       "astro-stakers.poolv1.near": {
-#         "deposit": 2977.1029163720427,
-#         "reward": 107.41283059593843,
-#         "staked": 3084.515746967981
+#   "accounts": {
+#     "a.near": {
+#       "validators": {
+#         "astro-stakers.poolv1.near": {
+#           "deposit": 2977.1029163720427,
+#           "reward": 113.53010517995608,
+#           "staked": 3090.633021551999,
+#           "unstaked": 0
+#         },
+#         "zavodil.poolv1.near": {
+#           "deposit": 2626.058084426484,
+#           "reward": 118.74669581740272,
+#           "staked": 2744.804780243887,
+#           "unstaked": 0
+#         }
 #       },
-#       "zavodil.poolv1.near": {
-#         "deposit": 2626.058084426484,
-#         "reward": 113.30169530044486,
-#         "staked": 2739.359779726929
+#       "total": {
+#         "deposit": 5603.161000798527,
+#         "reward": 232.2768009973588,
+#         "staked": 5835.437801795886,
+#         "unstaked": 0
 #       }
 #     }
+#   },
+#   "total": {
+#     "deposit": 5603.161000798527,
+#     "reward": 232.2768009973588,
+#     "staked": 5835.437801795886,
+#     "unstaked": 0
 #   }
 # }
 function near_staking_info() {
@@ -257,15 +286,24 @@ function near_staking_info() {
           local validators="$(jq -r .validators <<< "$deposits")"
           for validator in $(jq -r 'keys[]' <<< "$validators"); do
             local deposit="$(jq -r '.["'"$validator"'"]' <<< "$validators")"
-            near_staking_balance "$validator" "$account" \
+            near_staking_account "$validator" "$account" \
             | jq -r '
               .["'"$account"'"]
               | {
-                "'"$validator"'": {
-                  deposit: '"$deposit"',
-                  reward: [. - '"$deposit"', 0] | max,
-                  staked: .
-                }
+                "'"$validator"'": (
+                  {
+                    deposit: '"$deposit"',
+                    reward: 1,
+                  } + .
+                )
+                | ( . + { reward: ((.staked // 0) + (.unstaked // 0) - .deposit) } )
+                | to_entries
+                | map(
+                    if .value > 1e-10 then .
+                    else . + { value: 0 }
+                    end
+                  )
+                | from_entries
               }'
           done \
           | jq -s '
