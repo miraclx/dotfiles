@@ -308,7 +308,7 @@ function near_staking_info() {
                 "'"$validator"'": (
                   {
                     deposit: '"$deposit"',
-                    reward: 1,
+                    reward: 0,
                   } + .
                 )
                 | ( . + { reward: ((.staked // 0) + (.unstaked // 0) - .deposit) } )
@@ -319,6 +319,7 @@ function near_staking_info() {
                     end
                   )
                 | from_entries
+                | ( . + { total: (.staked + .unstaked) } )
               }'
           done \
           | jq -s '
@@ -326,14 +327,18 @@ function near_staking_info() {
             | {
               "'"$account"'": {
                 validators: .,
-                total: map(to_entries)
-                  | add
-                  | group_by(.key)
-                  | map({
-                    key: .[0].key,
-                    value: map(.value) | add
-                  })
-                  | from_entries
+                sum: (
+                  { deposit: 0, reward: 0, staked: 0, unstaked: 0, total: 0 } + (
+                    map(to_entries)
+                    | add
+                    | group_by(.key)
+                    | map({
+                      key: .[0].key,
+                      value: map(.value) | add
+                    })
+                    | from_entries
+                  )
+                )
               }
             }' > "$file"
         fi
@@ -358,17 +363,21 @@ function near_staking_info() {
     add
     | {
       accounts: .,
-      total: [
-        map(.total | select(. != null) | to_entries)
-        | add
-        | select(. != null)
-        | group_by(.key)
-        | map({
-          key: .[0].key,
-          value: map(.value) | add
-        })
-        | from_entries
-      ] | add
+      sum: (
+        { deposit: 0, reward: 0, staked: 0, unstaked: 0, total: 0 } + (
+          [
+            map(.sum | select(. != null) | to_entries)
+            | add
+            | select(. != null)
+            | group_by(.key)
+            | map({
+              key: .[0].key,
+              value: map(.value) | add
+            })
+            | from_entries
+          ] | add
+        )
+      )
     }'
 }
 
