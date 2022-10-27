@@ -7,4 +7,6 @@ then
   FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
 fi
 
+eval "$(direnv hook zsh)"
+
 # --- end --- #
