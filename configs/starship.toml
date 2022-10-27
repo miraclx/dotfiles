@@ -11,6 +11,9 @@ add_newline = false
 success_symbol = "[➜](bold green)"
 error_symbol = "[➜](bold yellow)"
 
+[gcloud]
+format = "on [$symbol$active]($style) "
+
 # Disable the package module, hiding it from the prompt completely
 [package]
 disabled = true
