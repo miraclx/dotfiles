@@ -2,6 +2,8 @@
         email = omiraculous@gmail.com
         name = Miraculous Owonubi
         signingKey = A9BC9FCFBEF15C92
+[init]
+	defaultBranch = master
 [commit]
 	gpgsign = true
 [core]
