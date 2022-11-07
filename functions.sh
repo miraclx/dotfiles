@@ -37,7 +37,7 @@ function ghc() {
 }
 
 function pw() {
-  tr -dc 'A-Za-z0-9!@#$%^&*' </dev/urandom | head -c ${1:-18}
+ LANG=C tr -dc 'A-Za-z0-9!@#$%^&*' </dev/urandom | head -c ${1:-18}
 }
 
 # yoctoⓃ to Ⓝ
