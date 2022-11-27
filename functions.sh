@@ -407,9 +407,14 @@ function near_portfolio() {
     echo "\x1b[31mNo portfolio history found\x1b[0m" >&2
     return 1
   elif [ ${#two_files[@]} -eq 2 ]; then
-    local cmd="delta -s $PORTFOLIO_HISTORY/${two_files[1]} $PORTFOLIO_HISTORY/${two_files[2]}"
+    local cmd="delta -s $PORTFOLIO_HISTORY/${two_files[1]} $PORTFOLIO_HISTORY/${two_files[2]} --paging never --width $(tput cols)"
     echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
-    eval "$cmd" || return $?
+    local diff
+    if diff=$(eval "$cmd"); then :
+    else
+      bat <<< "$diff"
+      return $?
+    fi
 
     if [[ "$new_file" == "$PORTFOLIO_HISTORY/${two_files[2]}" ]]; then
       echo "\x1b[33mNo portfolio state changes, not saving\x1b[0m" >&2
