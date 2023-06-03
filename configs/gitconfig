@@ -1,7 +1,7 @@
 [user]
         email = omiraculous@gmail.com
         name = Miraculous Owonubi
-        signingKey = A9BC9FCFBEF15C92
+        signingKey = CE56ABF1A9C4828A
 [init]
 	defaultBranch = master
 [commit]
