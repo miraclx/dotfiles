@@ -8,7 +8,7 @@ eval "$(/opt/homebrew/bin/brew shellenv | sed -E 's,(export (.*PATH)="(.*)\${.*"
 
 export PATH="$(pathadd "$PATH" "$HOME/.local/bin")"
 
-export NVM_NODE_VER="v18.7.0"
+export NVM_NODE_VER="v20.2.0"
 export NVM_DIR="$HOME/.nvm"
 export NVM_BIN="$NVM_DIR/versions/node/$NVM_NODE_VER/bin"
 
