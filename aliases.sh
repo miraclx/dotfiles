@@ -1,5 +1,5 @@
 alias ls=exa
-alias py=python
+alias py=python3
 alias xtime=/bin/time
 alias ytdl=youtube-dl
 alias 1c="awk '{ print \$1 }'"
