@@ -1,5 +1,5 @@
 function work() {
-  z "$W0RK_D1R3CT0RY/$1" && \
+  cd "$W0RK_D1R3CT0RY/$1" && \
   figlet -fslant "Let's code </>" && \
   echo "Directory: $(pwd)"
 }
