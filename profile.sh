@@ -34,4 +34,6 @@ export WASMTIME_HOME="$HOME/.wasmtime"
 
 export PATH="$(pathadd "$PATH" "$WASMTIME_HOME/bin")"
 
+export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/gnu-tar/libexec/gnubin")"
+
 # --- end --- #
