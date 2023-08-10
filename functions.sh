@@ -430,4 +430,10 @@ function near_portfolio() {
   eval "$cmd" | jq . --indent 4
 }
 
+function docker_clean_images() {
+  local cmd="docker images --filter "dangling=true" -q --no-trunc | xargs -r docker rmi"
+  echo "\x1b[38;5;244m$ $cmd\x1b[0m" >&2
+  eval "$cmd"
+}
+
 # --- end --- #
