@@ -36,4 +36,6 @@ export PATH="$(pathadd "$PATH" "$WASMTIME_HOME/bin")"
 
 export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/gnu-tar/libexec/gnubin")"
 
+export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/coreutils/libexec/gnubin")"
+
 # --- end --- #
