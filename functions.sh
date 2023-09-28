@@ -436,4 +436,76 @@ function docker_clean_images() {
   eval "$cmd"
 }
 
+# <RAW key> -> <DER key>
+# <bs58 encoded key> -> <DER key>
+# ed25519:<bs58 encoded key> -> <DER key>
+function ed25519_raw_der() {
+  local input="$(xxd -p -l100 -c0 | sed 's/^656432353531393a//' | tr -d '\n')"
+
+  if [[ ${#input} -gt 128 ]]; then
+    local input="$(echo -n "$input" | xxd -r -p | bs58 -d | xxd -p -l65 -c0 | tr -d '\n')"
+  fi
+
+  if [[ ${#input} -gt 128 ]]; then
+    echo "Invalid ed25519 key length: $(( ${#input} / 2 ))" >&2
+    return 1
+  fi
+
+  # https://stackoverflow.com/a/63244639/9806233
+  # https://datatracker.ietf.org/doc/html/rfc8410
+  # https://mta.openssl.org/pipermail/openssl-users/2018-March/007777.html
+  case "$1" in
+    pr | pri | priv | priva | privat | private)
+        local key="$(
+          echo -n "302e 020100 3005 06032b6570 0422 0420" # 16 bytes
+          echo -n "$input" | head -c64
+        )"
+      ;;
+    pu | pub | publi | public)
+        local key="$(
+          echo -n "302a 3005 06032b6570 0321 00" # 12 bytes
+          echo -n "$input"
+        )"
+      ;;
+    *)
+      echo "Usage: ed25519_der [private|public]" >&2
+      return 1
+      ;;
+  esac
+
+  echo -n "$key" | xxd -r -p | openssl asn1parse -inform der -noout -out -
+}
+
+# <DER key> -> <RAW key>
+function ed25519_der_raw() {
+  local input="$(openssl asn1parse -inform der -noout -out - | xxd -p -l100 -c0 | tr -d '\n')"
+
+  case ${#input} in
+    96)
+        echo "$input" | xxd -r -p | tail -c32
+        echo "$input" | xxd -r -p | openssl pkey -inform der -outform der -pubout | ed25519_der_raw
+      ;;
+    88)
+        echo "$input" | xxd -r -p | tail -c32
+      ;;
+    *)
+        echo "Invalid ed25519 key length: $(( ${#input} / 2 ))" >&2
+        return 1
+      ;;
+  esac
+}
+
+# <RAW key> -> ed25519:<bs58 encoded key>
+function ed25519_pretty() {
+  echo -n "ed25519:"
+  bs58
+}
+
+# <RAW private key> -> <RAW public key>
+# <bs58 encoded private key> -> <RAW public key>
+# ed25519:<bs58 encoded private key> -> <RAW public key>
+function ed25519_raw_genpub() {
+  ed25519_raw_der private | openssl pkey -inform der -outform der -pubout | ed25519_der_raw
+}
+
 # --- end --- #
