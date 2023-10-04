@@ -442,7 +442,8 @@ function docker_clean_images() {
 function ed25519_raw_der() {
   local input="$(xxd -p -l100 -c0 | sed 's/^656432353531393a//' | tr -d '\n')"
 
-  if [[ ${#input} -gt 128 ]]; then
+  # parse anything that seems like an encoded key
+  if [[ ${#input} -ne 64 && ${#input} -ne 128 ]]; then
     local input="$(echo -n "$input" | xxd -r -p | bs58 -d | xxd -p -l65 -c0 | tr -d '\n')"
   fi
 
