@@ -20,6 +20,9 @@ export PATH="$(pathadd "$PATH" "$NVM_BIN")"
 
 export NODE_PATH=$(pathadd "$NODE_PATH" "$(realpath "$NVM_BIN/../lib/node_modules")")
 
+export PNPM_HOME="$HOME/Library/pnpm"
+export PATH="$(pathadd "$PATH" "$PNPM_HOME")"
+
 source "$HOME/.cargo/env"
 
 export STARSHIP_CONFIG="$HOME/.dotfiles/configs/starship.toml"
