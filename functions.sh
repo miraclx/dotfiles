@@ -509,4 +509,64 @@ function ed25519_raw_genpub() {
   ed25519_raw_der private | openssl pkey -inform der -outform der -pubout | ed25519_der_raw
 }
 
+# cid [-c, --codec <codec>] [data] -> <cid>
+function cid() {
+  local hash data codec=0x55 # raw
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      -c|--codec)
+        codec="$2"
+        if [[ ! "$codec" =~ ^((0x[0-9a-fA-F]+)|[0-9]+)$ ]]; then
+          echo "Invalid codec: $codec, must be a number or hex string" >&2
+          return 1
+        fi
+        shift 2
+        ;;
+      -h|--help)
+        echo "Deterministically generate a CID from data" >&2
+        echo >&2
+        echo "Usage:" >&2
+        echo "  cid [-c, --codec <codec>] [data]" >&2
+        echo >&2
+        echo "Arguments:" >&2
+        echo "  [data]               The data to hash, defaults to stdin" >&2
+        echo >&2
+        echo "Options:" >&2
+        echo "  -c, --codec <codec>  The codec to use, defaults to 0x55 (raw)" >&2
+        echo "  -h, --help           Show this help message" >&2
+        echo >&2
+        echo "Examples:" >&2
+        echo "  $ cid \"Hello, World\"" >&2
+        echo "  bafkreiadm5nmkp7zzuktltgh37g7ulcfrrjbqny7igg4cnxs2gnmd67iuu" >&2
+        echo >&2
+        echo "  $ echo -n \"Hello, World\" | cid" >&2
+        echo "  bafkreiadm5nmkp7zzuktltgh37g7ulcfrrjbqny7igg4cnxs2gnmd67iuu" >&2
+        echo >&2
+        echo "  $ echo -n '{\"Data\":\"Hello, World\",\"Links\":[]}' | cid -c 0x70 # dag-pb" >&2
+        echo "  bafybeifu5scx3sjsrwubbm7pfr7msh2i3endpdlrdeygixmdvlstfqcoya" >&2
+        return 1
+        ;;
+      *)
+        data="$1"
+        shift
+        ;;
+    esac
+  done
+
+  hash=` \
+    ( [[ -n "$data" ]] && printf "$data" || cat ) \
+    | openssl dgst -sha256 -binary \
+    | xxd -p -c0
+  `
+
+  # CIDv1(base32) = 'b' + '01' (version) + codec + '12' (sha2-256 code) + '20' (length of hash) + hash
+
+  printf 'b%s\n' `\
+    printf '01%x1220%s' "$codec" "$hash" \
+    | xxd -r -p \
+    | base32 -w0 \
+    | 'tr' '[:upper:]' '[:lower:]' | tr -d '=' \
+  `
+}
+
 # --- end --- #
