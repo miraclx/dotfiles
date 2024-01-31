@@ -41,4 +41,6 @@ export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/gnu-tar/libexec/gnubin"
 
 export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/coreutils/libexec/gnubin")"
 
+export PATH="$(pathadd "$PATH" "/Applications/RustRover 2023.3 EAP.app/Contents/MacOS")"
+
 # --- end --- #
