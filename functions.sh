@@ -569,4 +569,23 @@ function cid() {
   `
 }
 
+function platform_is() {
+  local platform="$(uname -s)"
+  case "$platform" in
+    Linux) platform=linux;;
+    Darwin) platform=macos;;
+    # MINGW*|MSYS*|CYGWIN*) platform=windows;;
+    *)
+      echo "Unexpected platform: \`$platform\`" >&2
+      return 1
+      ;;
+  esac
+
+  case "$1" in
+    linux) [[ "$platform" == "linux" ]];;
+    mac|macos|darwin) [[ "$platform" == "macos" ]];;
+    # windows) [[ "$platform" == "windows" ]];;
+  esac
+}
+
 # --- end --- #
