@@ -6,7 +6,6 @@ if platform_is darwin; then
   fi
 fi
 
-
 if platform_is darwin; then
   if ! xcode-select --install
     then echo "- Xcode Command Line Tools are installed"
@@ -71,16 +70,6 @@ if ! type fzf &>/dev/null; then
   else echo "- \`fzf\` is installed"
 fi
 
-if ! type starship &>/dev/null; then
-    if platform_is darwin
-      then brew install starship
-      else
-        echo "Download starship: https://starship.rs/"
-        exit 1
-    fi
-  else echo "- \`starship\` is installed"
-fi
-
 if ! type figlet &>/dev/null; then
     if platform_is darwin
       then brew install figlet
@@ -91,14 +80,14 @@ if ! type figlet &>/dev/null; then
   else echo "- \`figlet\` is installed"
 fi
 
-if ! type delta &>/dev/null; then
+if ! type starship &>/dev/null; then
     if platform_is darwin
-      then brew install git-delta
+      then brew install starship
       else
-        echo "Download delta: https://github.com/dandavison/delta"
+        echo "Download starship: https://starship.rs/"
         exit 1
     fi
-  else echo "- \`delta\` is installed"
+  else echo "- \`starship\` is installed"
 fi
 
 if ! type jq &>/dev/null; then
@@ -149,6 +138,16 @@ if ! type exa &>/dev/null; then
         exit 1
     fi
   else echo "- \`exa\` is installed"
+fi
+
+if ! type delta &>/dev/null; then
+    if platform_is darwin
+      then brew install git-delta
+      else
+        echo "Download delta: https://github.com/dandavison/delta"
+        exit 1
+    fi
+  else echo "- \`delta\` is installed"
 fi
 
 if ! type xxd &>/dev/null; then
