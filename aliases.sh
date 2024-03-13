@@ -9,6 +9,8 @@ alias escape_string="sed 's/\\\\/\\\\\\\\/g;s/\\x1b/\\\\x1b/g'"
 alias freya='freyr --no-net-check --no-browser --playlist-noescape'
 alias gdhh='gd $(git merge-base HEAD master) HEAD'
 
-alias vlc="/Applications/VLC.app/Contents/MacOS/VLC"
+if platform_is darwin; then
+  alias vlc="/Applications/VLC.app/Contents/MacOS/VLC"
+fi
 
 # --- end --- #

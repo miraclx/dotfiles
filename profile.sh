@@ -3,8 +3,10 @@ export W0RK_D1R3CT0RY="$HOME/git"
 export EDITOR=nano
 export NEAR_ENV=mainnet
 
-# brew likes to prioritized, so we need to manually check and only add if not already in path
-eval "$(/opt/homebrew/bin/brew shellenv | sed -E 's,(export (.*PATH)="(.*)\${.*".*),pathy_has "$\2" "\3" || \1,g')"
+if platform_is darwin; then
+  # brew likes to prioritized, so we need to manually check and only add if not already in path
+  eval "$(/opt/homebrew/bin/brew shellenv | sed -E 's,(export (.*PATH)="(.*)\${.*".*),pathy_has "$\2" "\3" || \1,g')"
+fi
 
 export PATH="$(pathadd "$PATH" "$HOME/.local/bin")"
 
@@ -20,8 +22,10 @@ export PATH="$(pathadd "$PATH" "$NVM_BIN")"
 
 export NODE_PATH=$(pathadd "$NODE_PATH" "$(realpath "$NVM_BIN/../lib/node_modules")")
 
-export PNPM_HOME="$HOME/Library/pnpm"
-export PATH="$(pathadd "$PATH" "$PNPM_HOME")"
+if platform_is darwin; then
+  export PNPM_HOME="$HOME/Library/pnpm"
+  export PATH="$(pathadd "$PATH" "$PNPM_HOME")"
+fi
 
 source "$HOME/.cargo/env"
 
@@ -29,18 +33,20 @@ export STARSHIP_CONFIG="$HOME/.dotfiles/configs/starship.toml"
 
 export GPG_TTY="$(tty)"
 
-export PATH="$(pathadd "$PATH" "$HOME/Library/Python/3.8/bin")"
-
-test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh" || true
-
 export WASMTIME_HOME="$HOME/.wasmtime"
 
 export PATH="$(pathadd "$PATH" "$WASMTIME_HOME/bin")"
 
-export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/gnu-tar/libexec/gnubin")"
+if platform_is darwin; then
+  test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh" || true
 
-export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/coreutils/libexec/gnubin")"
+  export PATH="$(pathadd "$PATH" "$HOME/Library/Python/3.8/bin")"
 
-export PATH="$(pathadd "$PATH" "/Applications/RustRover 2023.3 EAP.app/Contents/MacOS")"
+  export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/gnu-tar/libexec/gnubin")"
+
+  export PATH="$(pathadd "$PATH" "$HOMEBREW_REPOSITORY/opt/coreutils/libexec/gnubin")"
+
+  export PATH="$(pathadd "$PATH" "/Applications/RustRover 2023.3 EAP.app/Contents/MacOS")"
+fi
 
 # --- end --- #

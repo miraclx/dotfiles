@@ -102,6 +102,7 @@ function pathadd() {
   if pathy_has "$1" "$2"; then
     echo "$1"
   else
+    # todo! check that the path exists
     echo "$2${1:+:$1}"
   fi
 }
