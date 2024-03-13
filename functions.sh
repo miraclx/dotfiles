@@ -581,10 +581,14 @@ function platform_is() {
       ;;
   esac
 
-  case "$1" in
+  case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
     linux) [[ "$platform" == "linux" ]];;
     mac|macos|darwin) [[ "$platform" == "macos" ]];;
     # windows) [[ "$platform" == "windows" ]];;
+    *)
+      echo "Unexpected platform: \`$1\`, expected one of: linux, mac, macos, darwin" >&2
+      return 1
+      ;;
   esac
 }
 
