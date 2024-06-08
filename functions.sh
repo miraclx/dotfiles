@@ -593,4 +593,43 @@ function platform_is() {
   esac
 }
 
+# Usage: near_rpc_url [network]
+# Defaults to NEAR_ENV or mainnet
+function near_rpc_url() {
+  local network="${1:-${NEAR_ENV:-mainnet}}"
+  case "$network" in
+    mainnet) echo "https://rpc.mainnet.near.org";;
+    testnet) echo "https://rpc.testnet.near.org";;
+    *)
+      echo "Unknown NEAR network: $network" >&2
+      return 1
+      ;;
+  esac
+}
+
+# get NEAR balance(s)
+# Usage: near_balance [account_id...]
+# Defaults to NEAR_PORTFOLIO_ACCOUNTS
+# Example: near_balance alice.near bob.near
+function near_balance() {
+  local accounts=()
+  if [[ "$#" -eq 0 ]]; then
+    accounts=($NEAR_PORTFOLIO_ACCOUNTS)
+  else
+    accounts=("$@")
+  fi
+
+  (
+    for account in "${accounts[@]}"; do
+      printf "$account: "
+      xh "$(near_rpc_url)" \
+        jsonrpc=2.0 id=dontcare method=query \
+        params'[request_type]'=view_account \
+        params'[finality]'=final \
+        params'[account_id]'="$account" \
+      | jq -r .result.amount | y2n
+    done
+  )
+}
+
 # --- end --- #
