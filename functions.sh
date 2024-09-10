@@ -73,14 +73,18 @@ function slrx() {
 }
 
 function near_faucet() {
-  account=`openssl rand -hex 16`
+  account=`openssl rand -hex 16`".testnet"
 
   xh https://helper.testnet.near.org/account \
     newAccountId="$account" \
     newAccountPublicKey=ed25519:Fp4FLrXufbDNDgHd8QwcWB5c5Yx3a6kQuvodxqYy3EC4
 
-  NEAR_ENV=testnet near delete "$account" $1 \
-    --seedPhrase "music pill foam among review orchard basic quit sauce calm message link"
+  near account delete-account $account \
+    beneficiary $1 \
+    network-config testnet \
+    sign-with-seed-phrase 'music pill foam among review orchard basic quit sauce calm message link' \
+    --seed-phrase-hd-path 'm/44'\''/397'\''/0'\''' \
+    send
 
   rm -rvf "$HOME"/.near-credentials/testnet/"$account".json
 }
