@@ -1,4 +1,4 @@
-alias ls=exa
+alias ls=eza
 alias py=python3
 alias xtime=/bin/time
 alias ytdl=youtube-dl

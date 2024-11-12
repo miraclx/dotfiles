@@ -132,14 +132,14 @@ if ! type rg &>/dev/null; then
 else echo "- \`ripgrep\` is installed"
 fi
 
-if ! type exa &>/dev/null; then
+if ! type eza &>/dev/null; then
   if platform_is darwin
-    then brew install exa
+    then brew install eza
     else
-      echo "Download exa: https://github.com/ogham/exa"
+      echo "Download eza: https://github.com/eza-community/eza"
       exit 1
   fi
-else echo "- \`exa\` is installed"
+else echo "- \`eza\` is installed"
 fi
 
 if ! type delta &>/dev/null; then
