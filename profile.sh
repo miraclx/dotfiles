@@ -12,7 +12,7 @@ fi
 
 export PATH="$(pathadd "$PATH" "$HOME/.local/bin")"
 
-export NVM_NODE_VER="v21.6.0"
+export NVM_NODE_VER="v23.9.0"
 export NVM_DIR="$HOME/.nvm"
 export NVM_BIN="$NVM_DIR/versions/node/$NVM_NODE_VER/bin"
 
