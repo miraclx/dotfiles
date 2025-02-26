@@ -49,10 +49,6 @@ if platform_is darwin; then
   export PATH="$(pathadd "$PATH" "/Applications/RustRover 2023.3 EAP.app/Contents/MacOS")"
 fi
 
-export WASMTIME_HOME="$HOME/.wasmtime"
-
-export PATH="$(pathadd "$PATH" "$WASMTIME_HOME/bin")"
-
 export WASMER_DIR="/Users/miraclx/.wasmer"
 [ -s "$WASMER_DIR/wasmer.sh" ] && source "$WASMER_DIR/wasmer.sh"
 
