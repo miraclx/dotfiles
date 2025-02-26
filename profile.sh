@@ -5,7 +5,9 @@ export NEAR_ENV=mainnet
 
 if platform_is darwin; then
   # brew likes to prioritized, so we need to manually check and only add if not already in path
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+  if ! pathy_has "$PATH" "/opt/homebrew/bin"; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  fi
 fi
 
 export PATH="$(pathadd "$PATH" "$HOME/.local/bin")"
